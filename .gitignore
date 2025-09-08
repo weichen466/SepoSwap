@@ -25,6 +25,7 @@ yarn-error.log*
 notes.txt
 .idea/
 
+.yarn
 .vscode/
 Intro.md
 package-lock.json
