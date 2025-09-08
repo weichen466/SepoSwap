@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "name": "SepoSwap",
+  "name": "seposwap",
   "builds": [
     {
       "src": "package.json",
