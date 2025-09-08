@@ -5,11 +5,6 @@ import { fortmatic, injected, portis, walletconnect, walletlink } from '../conne
 
 export const ROUTER_ADDRESS = '0x89E0eF8a0EA8DE3074cD129E816F536c85aa4914'
 
-// a list of tokens by chain
-type ChainTokenList = {
-  readonly [key: string]: Token[]
-}
-
 export const DAI = new Token(ChainId.MAINNET, '0x6B175474E89094C44Da98b954EedeAC495271d0F', 18, 'DAI', 'Dai Stablecoin')
 export const USDC = new Token(ChainId.MAINNET, '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', 6, 'USDC', 'USD//C')
 export const USDT = new Token(ChainId.MAINNET, '0xdAC17F958D2ee523a2206206994597C13D831ec7', 6, 'USDT', 'Tether USD')
@@ -26,41 +21,45 @@ const WETH_BASE_SEPOLIA = new Token(
   'Wrapped Ether'
 )
 
-const WETH_ONLY: ChainTokenList = {}
-WETH_ONLY['1'] = WETH[1] ? [WETH[1]] : []
-WETH_ONLY['3'] = WETH[3] ? [WETH[3]] : []
-WETH_ONLY['4'] = WETH[4] ? [WETH[4]] : []
-WETH_ONLY['5'] = WETH[5] ? [WETH[5]] : []
-WETH_ONLY['42'] = WETH[42] ? [WETH[42]] : []
-WETH_ONLY['84532'] = [WETH_BASE_SEPOLIA]
+// Simple token lists - avoid complex type operations
+export const BASES_TO_CHECK_TRADES_AGAINST: { [chainId: string]: Token[] } = {}
+export const CUSTOM_BASES: { [chainId: string]: { [tokenAddress: string]: Token[] } } = {}
+export const SUGGESTED_BASES: { [chainId: string]: Token[] } = {}
+export const BASES_TO_TRACK_LIQUIDITY_FOR: { [chainId: string]: Token[] } = {}
 
-// used to construct intermediary pairs for trading
-export const BASES_TO_CHECK_TRADES_AGAINST: ChainTokenList = {
-  ...WETH_ONLY,
-  '1': [...(WETH_ONLY['1'] || []), DAI, USDC, USDT, COMP, MKR]
+// Initialize mainnet tokens (temporarily without WETH to debug)
+BASES_TO_CHECK_TRADES_AGAINST['1'] = [DAI, USDC, USDT, COMP, MKR]
+SUGGESTED_BASES['1'] = [DAI, USDC, USDT]
+BASES_TO_TRACK_LIQUIDITY_FOR['1'] = [DAI, USDC, USDT]
+CUSTOM_BASES['1'] = {
+  [AMPL.address]: [DAI]
 }
 
-/**
- * Some tokens can only be swapped via certain pairs, so we override the list of bases that are considered for these
- * tokens.
- */
-export const CUSTOM_BASES: { [key: string]: { [tokenAddress: string]: Token[] } } = {
-  '1': {
-    [AMPL.address]: [DAI, WETH[1]]
-  }
-}
+// Initialize other chains manually to avoid forEach issues
+// Ropsten (3)
+BASES_TO_CHECK_TRADES_AGAINST['3'] = WETH[3] ? [WETH[3]] : []
+SUGGESTED_BASES['3'] = WETH[3] ? [WETH[3]] : []
+BASES_TO_TRACK_LIQUIDITY_FOR['3'] = WETH[3] ? [WETH[3]] : []
 
-// used for display in the default list when adding liquidity
-export const SUGGESTED_BASES: ChainTokenList = {
-  ...WETH_ONLY,
-  '1': [...(WETH_ONLY['1'] || []), DAI, USDC, USDT]
-}
+// Rinkeby (4)
+BASES_TO_CHECK_TRADES_AGAINST['4'] = WETH[4] ? [WETH[4]] : []
+SUGGESTED_BASES['4'] = WETH[4] ? [WETH[4]] : []
+BASES_TO_TRACK_LIQUIDITY_FOR['4'] = WETH[4] ? [WETH[4]] : []
 
-// used to construct the list of all pairs we consider by default in the frontend
-export const BASES_TO_TRACK_LIQUIDITY_FOR: ChainTokenList = {
-  ...WETH_ONLY,
-  '1': [...(WETH_ONLY['1'] || []), DAI, USDC, USDT]
-}
+// Goerli (5)
+BASES_TO_CHECK_TRADES_AGAINST['5'] = WETH[5] ? [WETH[5]] : []
+SUGGESTED_BASES['5'] = WETH[5] ? [WETH[5]] : []
+BASES_TO_TRACK_LIQUIDITY_FOR['5'] = WETH[5] ? [WETH[5]] : []
+
+// Kovan (42)
+BASES_TO_CHECK_TRADES_AGAINST['42'] = WETH[42] ? [WETH[42]] : []
+SUGGESTED_BASES['42'] = WETH[42] ? [WETH[42]] : []
+BASES_TO_TRACK_LIQUIDITY_FOR['42'] = WETH[42] ? [WETH[42]] : []
+
+// Base Sepolia
+BASES_TO_CHECK_TRADES_AGAINST['84532'] = [WETH_BASE_SEPOLIA]
+SUGGESTED_BASES['84532'] = [WETH_BASE_SEPOLIA]
+BASES_TO_TRACK_LIQUIDITY_FOR['84532'] = [WETH_BASE_SEPOLIA]
 
 export const PINNED_PAIRS: { readonly [chainId in ChainId]?: [Token, Token][] } = {
   [ChainId.MAINNET]: [
