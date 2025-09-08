@@ -7,7 +7,7 @@ export const ROUTER_ADDRESS = '0x89E0eF8a0EA8DE3074cD129E816F536c85aa4914'
 
 // a list of tokens by chain
 type ChainTokenList = {
-  readonly [chainId in ChainId]: Token[]
+  readonly [chainId in ChainId]?: Token[]
 }
 
 export const DAI = new Token(ChainId.MAINNET, '0x6B175474E89094C44Da98b954EedeAC495271d0F', 18, 'DAI', 'Dai Stablecoin')
@@ -17,19 +17,36 @@ export const COMP = new Token(ChainId.MAINNET, '0xc00e94Cb662C3520282E6f57172140
 export const MKR = new Token(ChainId.MAINNET, '0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2', 18, 'MKR', 'Maker')
 export const AMPL = new Token(ChainId.MAINNET, '0xD46bA6D942050d489DBd938a2C909A5d5039A161', 9, 'AMPL', 'Ampleforth')
 
+// Create WETH token for Base Sepolia manually since it's not in the SDK WETH object
+const WETH_BASE_SEPOLIA = new Token(
+  ChainId.BASESEPOLIA,
+  '0x4200000000000000000000000000000000000006',
+  18,
+  'WETH',
+  'Wrapped Ether'
+)
+
+// Helper function to safely get WETH for a chain
+function getWETHForChain(chainId: ChainId): Token {
+  if (chainId === ChainId.BASESEPOLIA) {
+    return WETH_BASE_SEPOLIA
+  }
+  return WETH[chainId as keyof typeof WETH] || WETH[ChainId.MAINNET]
+}
+
 const WETH_ONLY: ChainTokenList = {
-  [ChainId.MAINNET]: [WETH[ChainId.MAINNET]],
-  [ChainId.ROPSTEN]: [WETH[ChainId.ROPSTEN]],
-  [ChainId.RINKEBY]: [WETH[ChainId.RINKEBY]],
-  [ChainId.GÖRLI]: [WETH[ChainId.GÖRLI]],
-  [ChainId.KOVAN]: [WETH[ChainId.KOVAN]],
-  [ChainId.BASESEPOLIA]: [WETH[ChainId.BASESEPOLIA]]
+  [ChainId.MAINNET]: [getWETHForChain(ChainId.MAINNET)],
+  [ChainId.ROPSTEN]: [getWETHForChain(ChainId.ROPSTEN)],
+  [ChainId.RINKEBY]: [getWETHForChain(ChainId.RINKEBY)],
+  [ChainId.GÖRLI]: [getWETHForChain(ChainId.GÖRLI)],
+  [ChainId.KOVAN]: [getWETHForChain(ChainId.KOVAN)],
+  [ChainId.BASESEPOLIA]: [getWETHForChain(ChainId.BASESEPOLIA)]
 }
 
 // used to construct intermediary pairs for trading
 export const BASES_TO_CHECK_TRADES_AGAINST: ChainTokenList = {
   ...WETH_ONLY,
-  [ChainId.MAINNET]: [...WETH_ONLY[ChainId.MAINNET], DAI, USDC, USDT, COMP, MKR]
+  [ChainId.MAINNET]: [...(WETH_ONLY[ChainId.MAINNET] || []), DAI, USDC, USDT, COMP, MKR]
 }
 
 /**
@@ -45,13 +62,13 @@ export const CUSTOM_BASES: { [chainId in ChainId]?: { [tokenAddress: string]: To
 // used for display in the default list when adding liquidity
 export const SUGGESTED_BASES: ChainTokenList = {
   ...WETH_ONLY,
-  [ChainId.MAINNET]: [...WETH_ONLY[ChainId.MAINNET], DAI, USDC, USDT]
+  [ChainId.MAINNET]: [...(WETH_ONLY[ChainId.MAINNET] || []), DAI, USDC, USDT]
 }
 
 // used to construct the list of all pairs we consider by default in the frontend
 export const BASES_TO_TRACK_LIQUIDITY_FOR: ChainTokenList = {
   ...WETH_ONLY,
-  [ChainId.MAINNET]: [...WETH_ONLY[ChainId.MAINNET], DAI, USDC, USDT]
+  [ChainId.MAINNET]: [...(WETH_ONLY[ChainId.MAINNET] || []), DAI, USDC, USDT]
 }
 
 export const PINNED_PAIRS: { readonly [chainId in ChainId]?: [Token, Token][] } = {
