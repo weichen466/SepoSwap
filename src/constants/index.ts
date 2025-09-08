@@ -7,7 +7,7 @@ export const ROUTER_ADDRESS = '0x89E0eF8a0EA8DE3074cD129E816F536c85aa4914'
 
 // a list of tokens by chain
 type ChainTokenList = {
-  readonly [chainId in ChainId]?: Token[]
+  readonly [key: string]: Token[]
 }
 
 export const DAI = new Token(ChainId.MAINNET, '0x6B175474E89094C44Da98b954EedeAC495271d0F', 18, 'DAI', 'Dai Stablecoin')
@@ -17,7 +17,7 @@ export const COMP = new Token(ChainId.MAINNET, '0xc00e94Cb662C3520282E6f57172140
 export const MKR = new Token(ChainId.MAINNET, '0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2', 18, 'MKR', 'Maker')
 export const AMPL = new Token(ChainId.MAINNET, '0xD46bA6D942050d489DBd938a2C909A5d5039A161', 9, 'AMPL', 'Ampleforth')
 
-// Create WETH token for Base Sepolia manually since it's not in the SDK WETH object
+// Create WETH token for Base Sepolia manually
 const WETH_BASE_SEPOLIA = new Token(
   ChainId.BASESEPOLIA,
   '0x4200000000000000000000000000000000000006',
@@ -26,49 +26,40 @@ const WETH_BASE_SEPOLIA = new Token(
   'Wrapped Ether'
 )
 
-// Helper function to safely get WETH for a chain
-function getWETHForChain(chainId: ChainId): Token {
-  if (chainId === ChainId.BASESEPOLIA) {
-    return WETH_BASE_SEPOLIA
-  }
-  return WETH[chainId as keyof typeof WETH] || WETH[ChainId.MAINNET]
-}
-
-const WETH_ONLY: ChainTokenList = {
-  [ChainId.MAINNET]: [getWETHForChain(ChainId.MAINNET)],
-  [ChainId.ROPSTEN]: [getWETHForChain(ChainId.ROPSTEN)],
-  [ChainId.RINKEBY]: [getWETHForChain(ChainId.RINKEBY)],
-  [ChainId.GÖRLI]: [getWETHForChain(ChainId.GÖRLI)],
-  [ChainId.KOVAN]: [getWETHForChain(ChainId.KOVAN)],
-  [ChainId.BASESEPOLIA]: [getWETHForChain(ChainId.BASESEPOLIA)]
-}
+const WETH_ONLY: ChainTokenList = {}
+WETH_ONLY['1'] = WETH[1] ? [WETH[1]] : []
+WETH_ONLY['3'] = WETH[3] ? [WETH[3]] : []
+WETH_ONLY['4'] = WETH[4] ? [WETH[4]] : []
+WETH_ONLY['5'] = WETH[5] ? [WETH[5]] : []
+WETH_ONLY['42'] = WETH[42] ? [WETH[42]] : []
+WETH_ONLY['84532'] = [WETH_BASE_SEPOLIA]
 
 // used to construct intermediary pairs for trading
 export const BASES_TO_CHECK_TRADES_AGAINST: ChainTokenList = {
   ...WETH_ONLY,
-  [ChainId.MAINNET]: [...(WETH_ONLY[ChainId.MAINNET] || []), DAI, USDC, USDT, COMP, MKR]
+  '1': [...(WETH_ONLY['1'] || []), DAI, USDC, USDT, COMP, MKR]
 }
 
 /**
  * Some tokens can only be swapped via certain pairs, so we override the list of bases that are considered for these
  * tokens.
  */
-export const CUSTOM_BASES: { [chainId in ChainId]?: { [tokenAddress: string]: Token[] } } = {
-  [ChainId.MAINNET]: {
-    [AMPL.address]: [DAI, WETH[ChainId.MAINNET]]
+export const CUSTOM_BASES: { [key: string]: { [tokenAddress: string]: Token[] } } = {
+  '1': {
+    [AMPL.address]: [DAI, WETH[1]]
   }
 }
 
 // used for display in the default list when adding liquidity
 export const SUGGESTED_BASES: ChainTokenList = {
   ...WETH_ONLY,
-  [ChainId.MAINNET]: [...(WETH_ONLY[ChainId.MAINNET] || []), DAI, USDC, USDT]
+  '1': [...(WETH_ONLY['1'] || []), DAI, USDC, USDT]
 }
 
 // used to construct the list of all pairs we consider by default in the frontend
 export const BASES_TO_TRACK_LIQUIDITY_FOR: ChainTokenList = {
   ...WETH_ONLY,
-  [ChainId.MAINNET]: [...(WETH_ONLY[ChainId.MAINNET] || []), DAI, USDC, USDT]
+  '1': [...(WETH_ONLY['1'] || []), DAI, USDC, USDT]
 }
 
 export const PINNED_PAIRS: { readonly [chainId in ChainId]?: [Token, Token][] } = {
@@ -180,3 +171,24 @@ export const BLOCKED_PRICE_IMPACT_NON_EXPERT: Percent = new Percent(JSBI.BigInt(
 // used to ensure the user doesn't send so much ETH so they end up with <.01
 export const MIN_ETH: JSBI = JSBI.exponentiate(JSBI.BigInt(10), JSBI.BigInt(16)) // .01 ETH
 export const BETTER_TRADE_LINK_THRESHOLD = new Percent(JSBI.BigInt(75), JSBI.BigInt(10000))
+
+// Safe getter functions to prevent undefined errors
+export function getBasesToCheckTradesAgainst(chainId?: number): Token[] {
+  if (!chainId) return []
+  return BASES_TO_CHECK_TRADES_AGAINST[chainId.toString()] || []
+}
+
+export function getCustomBases(chainId?: number): { [tokenAddress: string]: Token[] } | undefined {
+  if (!chainId) return undefined
+  return CUSTOM_BASES[chainId.toString()]
+}
+
+export function getSuggestedBases(chainId?: number): Token[] {
+  if (!chainId) return []
+  return SUGGESTED_BASES[chainId.toString()] || []
+}
+
+export function getBasesToTrackLiquidityFor(chainId?: number): Token[] {
+  if (!chainId) return []
+  return BASES_TO_TRACK_LIQUIDITY_FOR[chainId.toString()] || []
+}
